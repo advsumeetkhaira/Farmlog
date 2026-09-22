@@ -1,22 +1,17 @@
-const KEY="farmlog-v4-vault";const enc=new TextEncoder(),dec=new TextDecoder();let db=null,vault=null,pin=null,locked=true;
 const $=id=>document.getElementById(id);
-const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a)));
-const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
-async function keyFor(p,s){return crypto.subtle.deriveKey({name:"PBKDF2",salt:s,iterations:250000,hash:"SHA-256"},await crypto.subtle.importKey("raw",enc.encode(p),"PBKDF2",false,["deriveKey"]),{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
-async function openVault(v,p){const k=await keyFor(p,ub64(v.s));return dec.decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub64(v.i)},k,ub64(v.d)))}
-async function seal(text,p,s){s=s||crypto.getRandomValues(new Uint8Array(16));const k=await keyFor(p,s),iv=crypto.getRandomValues(new Uint8Array(12));const d=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,enc.encode(text));return{v:1,s:b64(s),i:b64(iv),d:b64(d)}}
-async function persist(){if(!db||!pin||locked)return;vault=await seal(JSON.stringify(db),pin,vault?ub64(vault.s):null);localStorage.setItem(KEY,JSON.stringify(vault))}
-function esc(s){return String(s??"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
-function money(n){return "₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:0})}
-function showLock(msg="Your farm data is encrypted on this device."){let x=$("lockScreen");if(!x){x=document.createElement("div");x.id="lockScreen";document.body.appendChild(x)}x.innerHTML='<div class="lockbox"><div class="lockicon">🔐</div><h2>FarmLog</h2><p>'+msg+'</p><input id="pinInput" type="password" inputmode="numeric" placeholder="PIN"><button id="unlockBtn" class="save" type="button">Unlock</button><div id="pinErr" class="muted"></div></div>';x.style.display="flex";$("unlockBtn").addEventListener("click",unlock);$("pinInput").addEventListener("keydown",e=>{if(e.key==="Enter")unlock()})}
-async function unlock(){const p=$("pinInput").value;if(!p)return;try{const raw=await openVault(vault,p);const x=JSON.parse(raw);db={plots:x.plots||[],operations:x.operations||[],harvests:x.harvests||[],inputs:x.inputs||[],labourers:x.labourers||[]};pin=p;locked=false;$("lockScreen").style.display="none";render()}catch(e){$("pinErr").textContent="Incorrect PIN or unreadable vault."}}
-function lock(){if(locked)return;db=null;pin=null;locked=true;showLock()}
-function init(){try{const raw=localStorage.getItem(KEY);if(raw){vault=JSON.parse(raw);showLock()}else{showLock("No encrypted FarmLog vault was found in this browser. Your existing Home Screen data has not been changed.")}wire()}catch(e){document.body.innerHTML='<div style="padding:30px;font-family:system-ui"><h2>FarmLog</h2><p>Startup error: '+esc(e.message)+'</p></div>'}}
-function wire(){
-$("lockBtn").addEventListener("click",lock);$("closeBtn").addEventListener("click",()=>{$("modal").classList.remove("show")});
-document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("#nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));$(b.dataset.tab).classList.add("active");if(!locked)render()}));
-document.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()=>{if(locked){showLock();return}openForm(b.dataset.add)}));
+let db={plots:[],operations:[],harvests:[],inputs:[],labourers:[]};
+function init(){
+ try{
+  const raw=localStorage.getItem("farmlog-plain-data");
+  if(raw){db={...db,...JSON.parse(raw)}}
+  else{
+   db.plots=[{id:1,crop:"Bitter gourd",variety:"HyVeg Raja",acres:1},{id:2,crop:"Bitter gourd",variety:"VNR 42",acres:1},{id:3,crop:"Tomato",variety:"Syngenta Saaho",acres:1}];
+   persist();
+  }
+  wire();render();
+ }catch(e){document.body.innerHTML='<div style="padding:30px;font-family:system-ui"><h2>FarmLog</h2><p>Startup error: '+String(e.message).replace(/</g,"&lt;")+'</p></div>'}
 }
+function persist(){localStorage.setItem("farmlog-plain-data",JSON.stringify(db))}
 function render(){if(!db)return;const ops=db.operations||[],hs=db.harvests||[];const kg=hs.reduce((s,x)=>s+(+x.kg||0),0),sales=hs.reduce((s,x)=>s+(+x.kg||0)*(+x.price||0),0),cost=ops.reduce((s,x)=>s+(+x.cost||0),0);$("seasonSummary").innerHTML='<div class="small">SEASON TO DATE</div><b>'+money(sales)+' gross sales</b><div class="muted">'+kg.toLocaleString()+' kg harvested • '+money(cost)+' operating cost</div>';$("cards").innerHTML='<div class="card">Plots<b>'+db.plots.length+'</b></div><div class="card">Operations<b>'+ops.length+'</b></div><div class="card">Harvest<b>'+kg.toLocaleString()+' kg</b></div><div class="card">Sales<b>'+money(sales)+'</b></div>';
 $("today").innerHTML=ops.filter(x=>new Date(x.date).toDateString()===new Date().toDateString()).map(opHTML).join("")||'<div class="empty">Nothing logged today.</div>';$("operationList").innerHTML=ops.slice().reverse().map(opHTML).join("")||'<div class="empty">No work recorded.</div>';$("plotList").innerHTML=db.plots.map(p=>'<div class="item"><div><h3>'+esc(p.crop)+' — '+esc(p.variety)+'</h3><div class="muted">'+(p.acres||0)+' acres</div></div></div>').join("")||'<div class="empty">No plots.</div>';$("labourList").innerHTML=db.labourers.map(p=>'<div class="item"><h3>'+esc(p.name)+'</h3><div class="muted">'+esc(p.role||"General")+' • '+money(p.rate)+'/day</div></div>').join("")||'<div class="empty">No labourers.</div>';$("harvestList").innerHTML=hs.slice().reverse().map(h=>'<div class="item"><div><h3>'+h.kg+' kg @ '+money(h.price)+'/kg</h3><div class="muted">'+esc(h.market||"")+'</div></div><b>'+money(h.kg*h.price)+'</b></div>').join("")||'<div class="empty">No harvest records.</div>';$("reportList").innerHTML=db.plots.map(p=>{let o=ops.filter(x=>String(x.plotId)===String(p.id)),h=hs.filter(x=>String(x.plotId)===String(p.id));let c=o.reduce((s,x)=>s+(+x.cost||0),0),r=h.reduce((s,x)=>s+(+x.kg||0)*(+x.price||0),0);return '<div class="panel"><h3>'+esc(p.crop)+' — '+esc(p.variety)+'</h3><div class="muted">Cost '+money(c)+' • Sales '+money(r)+' • Net '+money(r-c)+'</div></div>'}).join("")}
 function opHTML(a){return '<div class="item"><div><h3>'+esc(a.title||a.type)+'</h3><div class="muted">'+esc(a.type)+' • '+new Date(a.date).toLocaleString()+(a.qty?' • '+esc(a.qty)+' '+esc(a.unit||""):"")+'</div></div><b>'+money(a.cost)+'</b></div>'}
