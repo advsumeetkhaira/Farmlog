@@ -20,7 +20,7 @@ function opHTML(a){return '<div class="item"><div><h3>'+esc(a.title||a.type)+'</
 function wire(){
  document.querySelectorAll("#nav button").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll("#nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));$(b.dataset.tab).classList.add("active");render()}));
  document.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()=>openForm(b.dataset.add)));
- $("closeBtn").addEventListener("click",()=>$("modal").classList.remove("show"));
+ $("closeBtn").addEventListener("click",()=>$("modal").classList.remove("show")); document.querySelectorAll("[data-edit-plot]").forEach(b=>b.addEventListener("click",()=>openEditPlot(Number(b.dataset.editPlot))));
  document.querySelectorAll("[data-edit-plot]").forEach(b=>b.addEventListener("click",()=>openEditPlot(Number(b.dataset.editPlot))));
 }
 function openEditPlot(id){const p=db.plots.find(x=>x.id===id);if(!p)return;$("modalBody").innerHTML='<h2>Edit Plot</h2><label>Crop</label><input id="fCrop" value="'+esc(p.crop)+'"><label>Variety</label><input id="fVar" value="'+esc(p.variety)+'"><label>Area (acres)</label><input id="fAcres" type="number" value="'+(p.acres||0)+'"><button id="saveForm" class="save" type="button">Save changes</button>';$("modal").classList.add("show");$("saveForm").addEventListener("click",async()=>{p.crop=$("fCrop").value;p.variety=$("fVar").value;p.acres=+$("fAcres").value||0;persist();$("modal").classList.remove("show");render()})}
