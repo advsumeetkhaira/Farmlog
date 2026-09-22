@@ -3,10 +3,16 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,14 +22,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
+      - name: Clear stuck Pages deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/deployments/5b9c62adea74dedad7e2490a1129590dc28cf824/cancel" || true
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
