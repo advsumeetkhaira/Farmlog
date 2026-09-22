@@ -1,3 +1,5 @@
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
+function money(v){return "₹"+(Number(v)||0).toLocaleString("en-IN",{maximumFractionDigits:2})}
 const $=id=>document.getElementById(id);
 let db={plots:[],operations:[],harvests:[],inputs:[],labourers:[]};
 function init(){
