@@ -1,12 +1,10 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#173b2a"><title>FarmLog</title><link rel="stylesheet" href="style.css?v=10"></head><body>
-<header><div><h1>FarmLog</h1><p>Private farm operating system</p></div><button id="lockBtn" type="button">🔐 Lock</button></header>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#173b2a"><title>FarmLog Clean</title><link rel="stylesheet" href="style.css?v=11"></head><body>
+<header><div><h1>FarmLog</h1><p>No PIN / no encryption mode</p></div></header>
 <nav id="nav"><button class="active" data-tab="dashboard" type="button">Today</button><button data-tab="operations" type="button">Work</button><button data-tab="farm" type="button">Farm</button><button data-tab="harvest" type="button">Harvest</button><button data-tab="reports" type="button">P&L</button></nav>
 <main>
 <section id="dashboard" class="tab active"><div class="hero" id="seasonSummary"></div><div class="cards" id="cards"></div><div class="quick"><h2>Quick Add</h2><div class="grid"><button data-add="Fertigation" type="button">💧 Fertigation</button><button data-add="Spray" type="button">🧪 Spray</button><button data-add="Labour" type="button">👷 Labour</button><button data-add="Expense" type="button">₹ Expense</button><button data-add="Harvest" type="button">🚜 Harvest</button><button data-add="Labourer" type="button">👤 Labourer</button></div></div><div class="panel"><h2>Today's Work</h2><div id="today"></div></div></section>
 <section id="operations" class="tab"><div class="sectionhead"><h2>Work Log</h2><button data-add="Fertigation" type="button">＋ Add</button></div><div id="operationList"></div></section>
 <section id="farm" class="tab"><div class="sectionhead"><h2>Farm & Masters</h2><button data-add="Plot" type="button">＋ Plot</button></div><div class="cards" id="farmStats"></div><div class="panel"><h2>Plots & Crops</h2><div id="plotList"></div></div><div class="panel"><div class="sectionhead"><h2>Labourers</h2><button data-add="Labourer" type="button">＋ Labourer</button></div><div id="labourList"></div></div></section>
-<section id="harvest" class="tab"><div class="sectionhead"><h2>Harvest & Sales</h2><button data-add="Harvest" type="button">＋ Add</button></div><div id="harvestList"></div></section>
-<section id="reports" class="tab"><h2>Crop P&L</h2><div id="reportList"></div></section>
-</main>
+<section id="harvest" class="tab"><div class="sectionhead"><h2>Harvest & Sales</h2><button data-add="Harvest" type="button">＋ Add</button></div><div id="harvestList"></div></section><section id="reports" class="tab"><h2>Crop P&L</h2><div id="reportList"></div></section></main>
 <div id="modal" class="modal"><div class="sheet"><button id="closeBtn" class="close" type="button">×</button><div id="modalBody"></div></div></div>
-<script src="app10.js?v=1"></script></body></html>
+<script>if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{})}</script><script src="app10.js?v=2"></script></body></html>
